@@ -1,13 +1,33 @@
-import google.generativeai as genai
+from fastapi import FastAPI
+from pydantic import BaseModel
+from groq import Groq
+import os
 
-genai.configure(api_key="AQ.Ab8RN6IhqBAMzsI9fm1QG0JgTuhZmnsOw-E8o8wyUhWenJH0qQ")
-model = genai.GenerativeModel("gemini-1.5-flash")
+app = FastAPI()
+
+# Load API key from environment
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
+client = Groq(api_key=GROQ_API_KEY)
+
+
+class ChatRequest(BaseModel):
+    message: str
+
 
 @app.post("/chat")
-def chat(message: str):
+def chat(data: ChatRequest):
 
-    response = model.generate_content(message)
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {
+                "role": "user",
+                "content": data.message
+            }
+        ]
+    )
 
     return {
-        "response": response.text
+        "response": response.choices[0].message.content
     }
